@@ -129,7 +129,8 @@ function extractPoints(doc) {
  *
  * 誤検出防止の戦略:
  * 1. クーポン専用の既知セレクタ（#couponFeature 等）はdoc全体から安全に検索
- * 2. テキスト検索フォールバックは "Coupon:" (コロン必須) パターンのみ使用
+ * 2. クーポン取得済み状態: .promotions-unified-label の Shadow DOM template 内の "XX% OFF適用済" を検索
+ * 3. テキスト検索フォールバックは "Coupon:" (コロン必須) パターンのみ使用
  *    → "✨ 50% OFF Coupon Festival" は "Coupon:" 形式ではないため誤検出しない
  * @param {Document} doc
  * @returns {{ couponRate: number|null, couponAmount: number|null }}
@@ -157,6 +158,20 @@ function extractCoupon(doc) {
       if (amountMatch) {
         return { couponRate: null, couponAmount: parseInt(amountMatch[1].replace(',', ''), 10) };
       }
+    }
+  }
+
+  // クーポン取得済み状態: "XX% OFF適用済" が Shadow DOM (template) 内に表示される
+  // クーポン未取得 → [id^="couponText"] に "50% off" が存在
+  // クーポン取得済み → .promotions-unified-label coupon の <template shadowrootmode="open"> 内に "50% OFF適用済" が移動
+  const promoEl = doc.querySelector('.promotions-unified-label');
+  if (promoEl) {
+    const tmpl = promoEl.querySelector('template');
+    // template.content (DOMParser が shadowrootmode をサポートする場合) → innerHTML にフォールバック
+    const tmplText = (tmpl?.content?.textContent ?? '') || (tmpl?.innerHTML ?? '') || promoEl.innerHTML;
+    const claimedMatch = tmplText.match(/(\d+)%\s*OFF適用済/);
+    if (claimedMatch) {
+      return { couponRate: parseInt(claimedMatch[1], 10), couponAmount: null };
     }
   }
 
