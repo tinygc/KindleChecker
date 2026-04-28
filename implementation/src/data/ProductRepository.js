@@ -165,8 +165,11 @@ function extractCoupon(doc, htmlText = '') {
 
   // クーポン取得済み状態: "XX% OFF適用済" は bds-promotions-unified-label の Shadow DOM 内にあるため
   // DOMParser で解析後は doc.querySelector() では到達不可。生のHTMLテキストから直接検索する。
+  // ただしカルーセル内の他商品のクーポンを誤検出しないよう <bds-carousel-item 以前に限定する。
   if (htmlText) {
-    const claimedMatch = htmlText.match(/(\d+)%\s*OFF適用済/);
+    const carouselIdx = htmlText.indexOf('<bds-carousel-item');
+    const searchArea = carouselIdx > 0 ? htmlText.slice(0, carouselIdx) : htmlText;
+    const claimedMatch = searchArea.match(/(\d+)%\s*OFF適用済/);
     if (claimedMatch) {
       return { couponRate: parseInt(claimedMatch[1], 10), couponAmount: null };
     }
