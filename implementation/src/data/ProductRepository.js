@@ -129,13 +129,15 @@ function extractPoints(doc) {
  *
  * 誤検出防止の戦略:
  * 1. クーポン専用の既知セレクタ（#couponFeature 等）はdoc全体から安全に検索
- * 2. クーポン取得済み状態: .promotions-unified-label の Shadow DOM template 内の "XX% OFF適用済" を検索
+ * 2. クーポン取得済み状態: .promotions-unified-label は bds-promotions-unified-label の Shadow DOM 内にあり
+ *    doc.querySelector() では到達不可。生の HTML テキストから "XX% OFF適用済" を直接検索する
  * 3. テキスト検索フォールバックは "Coupon:" (コロン必須) パターンのみ使用
  *    → "✨ 50% OFF Coupon Festival" は "Coupon:" 形式ではないため誤検出しない
  * @param {Document} doc
+ * @param {string} htmlText - fetch で取得した生の HTML テキスト（Shadow DOM 貫通検索用）
  * @returns {{ couponRate: number|null, couponAmount: number|null }}
  */
-function extractCoupon(doc) {
+function extractCoupon(doc, htmlText = '') {
   // クーポン専用の既知セレクタはdoc全体から検索（誤検出リスクなし）
   const couponSelectors = [
     '#couponFeature',
@@ -161,15 +163,10 @@ function extractCoupon(doc) {
     }
   }
 
-  // クーポン取得済み状態: "XX% OFF適用済" が Shadow DOM (template) 内に表示される
-  // クーポン未取得 → [id^="couponText"] に "50% off" が存在
-  // クーポン取得済み → .promotions-unified-label coupon の <template shadowrootmode="open"> 内に "50% OFF適用済" が移動
-  const promoEl = doc.querySelector('.promotions-unified-label');
-  if (promoEl) {
-    const tmpl = promoEl.querySelector('template');
-    // template.content (DOMParser が shadowrootmode をサポートする場合) → innerHTML にフォールバック
-    const tmplText = (tmpl?.content?.textContent ?? '') || (tmpl?.innerHTML ?? '') || promoEl.innerHTML;
-    const claimedMatch = tmplText.match(/(\d+)%\s*OFF適用済/);
+  // クーポン取得済み状態: "XX% OFF適用済" は bds-promotions-unified-label の Shadow DOM 内にあるため
+  // DOMParser で解析後は doc.querySelector() では到達不可。生のHTMLテキストから直接検索する。
+  if (htmlText) {
+    const claimedMatch = htmlText.match(/(\d+)%\s*OFF適用済/);
     if (claimedMatch) {
       return { couponRate: parseInt(claimedMatch[1], 10), couponAmount: null };
     }
@@ -256,7 +253,7 @@ export async function fetchProductInfo(asin) {
   const currentPrice = extractCurrentPrice(doc);
   const listPrice = extractListPrice(doc);
   const { pointAmount, pointRate } = extractPoints(doc);
-  const { couponRate, couponAmount } = extractCoupon(doc);
+  const { couponRate, couponAmount } = extractCoupon(doc, html);
   const isKindleUnlimited = extractIsKindleUnlimited(doc);
 
   console.log(`[KindleChecker] ASIN=${asin}`, { currentPrice, listPrice, pointAmount, pointRate, couponRate, couponAmount, isKindleUnlimited });
