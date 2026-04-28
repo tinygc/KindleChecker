@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Kindle Checker",
+  "version": "1.0.0",
+  "description": "Amazonの欲しいものリスト上でKindle本のポイント還元率・割引率を表示する",
+  "host_permissions": [
+    "https://www.amazon.co.jp/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.co.jp/hz/wishlist/*",
+        "https://www.amazon.co.jp/wishlist/*"
+      ],
+      "js": ["implementation/src/content/index.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["implementation/src/**"],
+      "matches": ["https://www.amazon.co.jp/*"]
+    }
+  ]
+}

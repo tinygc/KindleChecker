@@ -1,0 +1,9 @@
+# GitHub Copilot instructions (local only)
+.github/
+
+# Debug files
+debug/
+
+# OS
+.DS_Store
+Thumbs.db
