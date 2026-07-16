@@ -7,3 +7,10 @@ debug/
 # OS
 .DS_Store
 Thumbs.db
+
+# Gradle / Android build outputs
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
