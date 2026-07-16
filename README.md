@@ -79,3 +79,29 @@ implementation/src/
 - Amazon.co.jp のみ対応
 - AmazonのHTML構造変更により動作しなくなる場合があります
 - 個人利用目的で作成しています
+
+## Android APK版
+
+Chrome拡張と同じ確認フローをAndroid端末でも使えるように、`app/` にネイティブAndroidプロジェクトを追加しています。
+
+### 使い方
+
+1. APKをインストールして「Kindle Checker」を起動
+2. Amazon.co.jp にログイン
+3. 欲しいものリスト（`https://www.amazon.co.jp/hz/wishlist/...`）を開く
+4. ページ読み込み後に自動で確認が開始されます。手動で再実行したい場合は上部の「確認」ボタンを押してください。
+
+### ビルド方法
+
+```bash
+gradle :app:assembleDebug
+```
+
+成功すると `app/build/outputs/apk/debug/app-debug.apk` が生成されます。
+
+### Android版の実装方針
+
+- WebViewでAmazon.co.jpの欲しいものリストを表示します。
+- 欲しいものリストページを検出したら、Chrome拡張の仕様を移植した `app/src/main/assets/kindle_checker.js` を注入します。
+- Kindle本のみを対象に、商品ページから価格・ポイント・クーポン・読み放題対象を取得してバッジ表示します。
+- 取得データは端末内のWebView上でのみ処理し、外部送信は行いません。
